@@ -13,15 +13,14 @@ import (
 )
 
 const (
-	DefaultRunMode = "web"
+	DefaultRunMode       = "web"
 	DefaultListenAddress = ":8787"
 )
 
 var (
-	sugar *zap.SugaredLogger
-	version string
+	sugar         *zap.SugaredLogger
+	version       string
 	listenAddress string
-
 )
 
 func init() {
@@ -48,24 +47,24 @@ func main() {
 
 	app.Commands = []cli.Command{
 		{
-			Name: "web",
+			Name:    "web",
 			Aliases: []string{"w"},
-			Usage: "start pidstat in web-mode",
-			Action: runWeb,
+			Usage:   "start pidstat in web mode",
+			Action:  runWeb,
 			Flags: []cli.Flag{
 				cli.StringFlag{
-					Name: "address",
-					Value: DefaultListenAddress,
-					Usage: "bind the server to a specific server",
+					Name:        "address",
+					Value:       DefaultListenAddress,
+					Usage:       "bind the server to a specific server",
 					Destination: &listenAddress,
 				},
 			},
 		},
 		{
-			Name: "cli",
+			Name:    "cli",
 			Aliases: []string{"c"},
-			Usage: "start pidstat in cli-mode",
-			Action: runCLI,
+			Usage:   "start pidstat in cli mode",
+			Action:  runCLI,
 		},
 	}
 
@@ -74,6 +73,7 @@ func main() {
 	}
 }
 
+// Launch the app in web mode
 func runWeb(ctx *cli.Context) error {
 	// Setup dependencies
 	d, err := deps.New()
@@ -82,7 +82,7 @@ func runWeb(ctx *cli.Context) error {
 	}
 
 	// Setup API server
-	a, err := api.New(listenAddress, d)
+	a, err := api.New(listenAddress, ctx.App.Version, d)
 	if err != nil {
 		sugar.Fatalf("unable to instantiate API: %v", err)
 	}
@@ -93,6 +93,7 @@ func runWeb(ctx *cli.Context) error {
 	return nil
 }
 
+// Launch the app in CLI mode
 func runCLI(ctx *cli.Context) error {
 	sugar.Error("CLI mode not implemented yet")
 	return nil
