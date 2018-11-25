@@ -3,20 +3,20 @@ package deps
 import (
 	"fmt"
 
-	"github.com/dselans/go-pidstat/pid"
+	"github.com/dselans/go-pidstat/stat"
 )
 
 type Dependencies struct {
-	Statter pid.Statter
+	Statter stat.Statter
 }
 
 func New() (*Dependencies, error) {
 	d := &Dependencies{}
 
 	// Setup dep 1
-	p, err := pid.New()
+	p, err := stat.New()
 	if err != nil {
-		return nil, fmt.Errorf("unable to instantiate pid: %v", err)
+		return nil, fmt.Errorf("unable to instantiate stat: %v", err)
 	}
 
 	d.Statter = p

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/dselans/go-pidstat/pid"
+	"github.com/dselans/go-pidstat/stat"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	renderPkg "github.com/unrolled/render"
@@ -57,6 +57,7 @@ func (a *API) Run() error {
 		http.FileServer(http.Dir("public")).ServeHTTP(w, r)
 	}))
 
+	// API routes
 	r.Route("/api", func(r chi.Router) {
 		r.Get("/version", a.getVersion)
 		r.Get("/process", a.getProcesses)
@@ -109,7 +110,7 @@ func (a *API) getProcess(w http.ResponseWriter, r *http.Request) {
 		statusCode := http.StatusInternalServerError
 		errorMessage := fmt.Sprintf("unable to fetch stats for processID '%v': %v", int32(processID), err)
 
-		if err == pid.NotWatchedErr {
+		if err == stat.NotWatchedErr {
 			statusCode = http.StatusNotFound
 			errorMessage = fmt.Sprintf("processID '%v' is not being watched", int32(processID))
 		}
