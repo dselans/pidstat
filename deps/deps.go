@@ -13,17 +13,13 @@ type Dependencies struct {
 func New() (*Dependencies, error) {
 	d := &Dependencies{}
 
-	// Setup dep 1
+	// Setup process statter
 	p, err := stat.New()
 	if err != nil {
-		return nil, fmt.Errorf("unable to instantiate stat: %v", err)
+		return nil, fmt.Errorf("unable to instan3tiate stat: %v", err)
 	}
 
 	d.Statter = p
-
-	// Setup dep 2
-
-	// .. and so on
 
 	return d, nil
 }

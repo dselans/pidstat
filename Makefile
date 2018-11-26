@@ -11,7 +11,7 @@ TEST_PACKAGES      := $(shell go list ./... | grep -v vendor | grep -v fakes | g
 .DEFAULT_GOAL := help
 
 run: ## Run application (without building)
-	go run *.go
+	go run -tags dev main.go
 
 test: ## Run tests
 	go test $(TEST_PACKAGES)
@@ -28,10 +28,10 @@ test/cover: ## Run all tests + open coverage report for all packages
 build: clean build/linux build/darwin ## Build for linux and darwin (save to OUTPUT_DIR/BIN)
 
 build/linux: clean/linux ## Build for linux (save to OUTPUT_DIR/BIN)
-	GOOS=linux go build -a -installsuffix cgo -ldflags $(LDFLAGS) -o $(OUTPUT_DIR)/$(BIN)-linux .
+	GOOS=linux go build -tags=!dev -a -installsuffix cgo -ldflags $(LDFLAGS) -o $(OUTPUT_DIR)/$(BIN)-linux .
 
 build/darwin: clean/darwin ## Build for darwin (save to OUTPUT_DIR/BIN)
-	GOOS=darwin go build -a -installsuffix cgo -ldflags $(LDFLAGS) -o $(OUTPUT_DIR)/$(BIN)-darwin .
+	GOOS=darwin go build -tags=!dev -a -installsuffix cgo -ldflags $(LDFLAGS) -o $(OUTPUT_DIR)/$(BIN)-darwin .
 
 clean: clean/darwin clean/linux ## Remove all build artifacts
 
