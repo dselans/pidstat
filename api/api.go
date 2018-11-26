@@ -105,7 +105,7 @@ func (a *API) getProcess(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stats, err := a.dependencies.Statter.GetStatsForPID(int32(processID))
+	procInfo, err := a.dependencies.Statter.GetStatsForPID(int32(processID))
 	if err != nil {
 		statusCode := http.StatusInternalServerError
 		errorMessage := fmt.Sprintf("unable to fetch stats for processID '%v': %v", int32(processID), err)
@@ -119,7 +119,7 @@ func (a *API) getProcess(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.JSON(w, http.StatusOK, stats)
+	render.JSON(w, http.StatusOK, procInfo)
 	return
 }
 
@@ -135,7 +135,20 @@ func (a *API) startProcessWatch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.JSON(w, http.StatusOK, map[string]string{"msg": fmt.Sprintf("start process watch for %v", processID)})
+	if err := a.dependencies.Statter.StartWatchProcess(int32(processID)); err != nil {
+		statusCode := http.StatusInternalServerError
+		errorMessage := fmt.Sprintf("unable to start watch for pid '%v': %v", processID, err)
+
+		if err == stat.AlreadyWatchedErr {
+			statusCode = http.StatusBadRequest
+			errorMessage = fmt.Sprintf("pid '%v' is already being watched", processID)
+		}
+
+		render.JSON(w, statusCode, map[string]interface{}{"error": errorMessage})
+		return
+	}
+
+	render.JSON(w, http.StatusOK, map[string]string{"msg": fmt.Sprintf("watch started for pid '%v'", processID)})
 }
 
 func (a *API) stopProcessWatch(w http.ResponseWriter, r *http.Request) {
@@ -150,7 +163,20 @@ func (a *API) stopProcessWatch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.JSON(w, http.StatusOK, map[string]string{"msg": fmt.Sprintf("stop process watch for %v", processID)})
+	if err := a.dependencies.Statter.StopWatchProcess(int32(processID)); err != nil {
+		statusCode := http.StatusInternalServerError
+		errorMessage := fmt.Sprintf("un	able to stop watch for pid '%v': %v", processID, err)
+
+		if err == stat.NotWatchedErr {
+			statusCode = http.StatusBadRequest
+			errorMessage = fmt.Sprintf("pid '%v' is not actively watched", processID)
+		}
+
+		render.JSON(w, statusCode, map[string]interface{}{"error": errorMessage})
+		return
+	}
+
+	render.JSON(w, http.StatusOK, map[string]string{"msg": fmt.Sprintf("watch stopped for pid '%v'", processID)})
 }
 
 func (a *API) getVersion(w http.ResponseWriter, r *http.Request) {

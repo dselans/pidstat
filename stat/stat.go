@@ -6,10 +6,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dselans/go-pidstat/util"
 	"github.com/relistan/go-director"
 	"github.com/shirou/gopsutil/process"
 	"go.uber.org/zap"
+
+	"github.com/dselans/go-pidstat/util"
 )
 
 const (
@@ -26,8 +27,7 @@ var (
 
 type Statter interface {
 	GetProcesses() ([]ProcInfo, error)
-	GetStats() (map[string][]ProcInfo, error)
-	GetStatsForPID(pid int32) ([]ProcInfo, error)
+	GetStatsForPID(pid int32) (ProcInfo, error)
 	StartWatchProcess(pid int32) error
 	StopWatchProcess(pid int32) error
 }
@@ -43,7 +43,7 @@ type Stat struct {
 	processListLock *sync.Mutex
 
 	// Map containing all actively watched processes (and their info)
-	watched map[int32]Proc
+	watched map[int32]*Proc
 
 	// TODO: Should we keep history?
 
@@ -55,6 +55,7 @@ type Proc struct {
 	ProcInfo ProcInfo
 	Looper   *director.TimedLooper
 	Process  *process.Process
+	Err      error // If set, we know we do not need to .Quit on the looper
 }
 
 type ProcInfo struct {
@@ -64,7 +65,7 @@ type ProcInfo struct {
 	CmdLine string `json:"cmd_line"`
 
 	// Available only in Proc.Metrics
-	Metrics     []ProcInfoMetrics `json:"data,omitempty"`
+	Metrics     []ProcInfoMetrics `json:"metrics,omitempty"`
 	MetricsLock *sync.Mutex       `json:"-"`
 }
 
@@ -92,7 +93,7 @@ func New() (*Stat, error) {
 		processListLock:   &sync.Mutex{},
 		processList:       make([]ProcInfo, 0),
 		watchedLock:       &sync.Mutex{},
-		watched:           make(map[int32]Proc, 0),
+		watched:           make(map[int32]*Proc, 0),
 	}
 
 	// run processlist fetcher on an interval
@@ -220,7 +221,7 @@ func (s *Stat) StartWatchProcess(pid int32) error {
 
 	looper := director.NewImmediateTimedLooper(director.FOREVER, StatInterval, nil)
 
-	s.watched[pid] = Proc{
+	s.watched[pid] = &Proc{
 		ProcInfo: procInfo,
 		Process:  proc,
 		Looper:   looper,
@@ -232,19 +233,27 @@ func (s *Stat) StartWatchProcess(pid int32) error {
 	go func(watchedProc *Proc) {
 		// Stop watching process if loop ever exits
 		defer func(pid int32) {
-			// TODO: Should we do anything smarter here?
+			// Should only get ran if loop exited on err
+			if watchedProc.Err == nil {
+				return
+			}
+
 			if err := s.StopWatchProcess(pid); err != nil {
 				sugar.Errorf("unable to stop watching pid '%v': %v", pid, err)
 			}
 		}(watchedProc.Process.Pid)
 
 		watchedProc.Looper.Loop(func() error {
-			sugar.Debugf("Fetching watched for stat %v", watchedProc.Process.Pid)
+			sugar.Debugf("Fetching metrics for pid '%v'", watchedProc.Process.Pid)
 
 			// Is the process still around?
 			if _, err := watchedProc.Process.Status(); err != nil {
 				fullErr := fmt.Errorf("cannot fetch watched pid '%v' status (no longer running?): %v", pid, err)
 				sugar.Error(fullErr)
+
+				// Prevent StopWatchProcess() from attempting to .Quit the looper (and block forever)
+				watchedProc.Err = fullErr
+
 				return fullErr
 			}
 
@@ -253,6 +262,10 @@ func (s *Stat) StartWatchProcess(pid int32) error {
 			if err != nil {
 				fullErr := fmt.Errorf("unable to fetch metrics for pid '%v': %v", pid, err)
 				sugar.Error(fullErr)
+
+				// Prevent StopWatchProcess() from attempting to .Quit the looper (and block forever)
+				watchedProc.Err = fullErr
+
 				return fullErr
 			}
 
@@ -263,7 +276,10 @@ func (s *Stat) StartWatchProcess(pid int32) error {
 
 			return nil
 		})
-	}(&watchedProc)
+
+		sugar.Debugf("process watch for '%v' exiting...", watchedProc.ProcInfo.PID)
+
+	}(watchedProc)
 
 	return nil
 }
@@ -297,21 +313,54 @@ func (s *Stat) getMetrics(proc *process.Process) (*ProcInfoMetrics, error) {
 // Stop gathering watched for a specific process
 func (s *Stat) StopWatchProcess(pid int32) error {
 	// Is the PID actively being watched?
+	if !s.isWatched(pid) {
+		return NotWatchedErr
+	}
 
 	// Looper stop
-	// TODO: Can we stop an already stopped looper? (in case .Loop returned err)
+	s.watchedLock.Lock()
+	defer s.watchedLock.Unlock()
+
+	procInfo, ok := s.watched[pid]
+	if !ok {
+		return fmt.Errorf("pid '%v' no longer in in watched map (bug?)", pid)
+	}
+
+	// Only stop the looper if it hasn't already exited on its own
+	if procInfo.Err == nil {
+		procInfo.Looper.Quit()
+	}
 
 	// Remove map entry
+	delete(s.watched, pid)
 
 	return nil
 }
 
-// Get statistics for a specific stat
-func (s *Stat) GetStatsForPID(pid int32) ([]ProcInfo, error) {
-	return nil, NotWatchedErr
-}
+// Get statistics for a specific pid
+func (s *Stat) GetStatsForPID(pid int32) (ProcInfo, error) {
+	if !s.isWatched(pid) {
+		return ProcInfo{}, NotWatchedErr
+	}
 
-// Get all watched
-func (s *Stat) GetStats() (map[string][]ProcInfo, error) {
-	return nil, fmt.Errorf("shit broke")
+	s.watchedLock.Lock()
+	defer s.watchedLock.Unlock()
+
+	// Get proc from watched list
+	proc, ok := s.watched[pid]
+	if !ok {
+		return ProcInfo{}, fmt.Errorf("stats no longer available for pid '%v' (bug?)", pid)
+	}
+
+	// Copy metrics (but need lock first)
+	proc.ProcInfo.MetricsLock.Lock()
+	defer proc.ProcInfo.MetricsLock.Unlock()
+
+	metrics := make([]ProcInfoMetrics, len(proc.ProcInfo.Metrics))
+	copy(metrics, proc.ProcInfo.Metrics)
+
+	procCopy := *proc
+	procCopy.ProcInfo.Metrics = metrics
+
+	return procCopy.ProcInfo, nil
 }
