@@ -11,7 +11,7 @@ TEST_PACKAGES      := $(shell go list ./... | grep -v vendor | grep -v fakes | g
 .DEFAULT_GOAL := help
 
 run: ## Run application (without building)
-	go run -tags dev main.go
+	go run *.go
 
 test: ## Run tests
 	go test $(TEST_PACKAGES)
@@ -25,21 +25,27 @@ test/cover: ## Run all tests + open coverage report for all packages
 	go tool cover -html=.coverage
 	$(RM) .coverage .coverage.tmp
 
+installtools: ## Install helper tools (req for build and clean targets)
+	go get -u github.com/gobuffalo/packr/v2/packr2
+
 build: clean build/linux build/darwin ## Build for linux and darwin (save to OUTPUT_DIR/BIN)
 
 build/linux: clean/linux ## Build for linux (save to OUTPUT_DIR/BIN)
-	GOOS=linux go build -tags=!dev -a -installsuffix cgo -ldflags $(LDFLAGS) -o $(OUTPUT_DIR)/$(BIN)-linux .
+	GOOS=linux packr2 build -a -installsuffix cgo -ldflags $(LDFLAGS) -o $(OUTPUT_DIR)/$(BIN)-linux .
 
 build/darwin: clean/darwin ## Build for darwin (save to OUTPUT_DIR/BIN)
-	GOOS=darwin go build -tags=!dev -a -installsuffix cgo -ldflags $(LDFLAGS) -o $(OUTPUT_DIR)/$(BIN)-darwin .
+	GOOS=darwin packr2 build -a -installsuffix cgo -ldflags $(LDFLAGS) -o $(OUTPUT_DIR)/$(BIN)-darwin .
 
 clean: clean/darwin clean/linux ## Remove all build artifacts
 
-clean/darwin: ## Remove darwin build artifacts
+clean/darwin: clean/packr2 ## Remove darwin build artifacts
 	$(RM) $(OUTPUT_DIR)/$(BIN)-darwin
 
-clean/linux: ## Remove linux build artifacts
+clean/linux: clean/packr2 ## Remove linux build artifacts
 	$(RM) $(OUTPUT_DIR)/$(BIN)-linux
+
+clean/packr2: ## Remove packr2 generated bits
+	packr2 clean
 
 help: ## Display this help message
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_\/-]+:.*?## / {printf "\033[34m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | \

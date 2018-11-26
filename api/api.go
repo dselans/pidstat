@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/dselans/go-pidstat/data"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	renderPkg "github.com/unrolled/render"
@@ -53,7 +52,7 @@ func (a *API) Run() error {
 
 	// Serve static files
 	r.Get("/*", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.FileServer(data.Assets).ServeHTTP(w, r)
+		http.FileServer(a.dependencies.PackrBox).ServeHTTP(w, r)
 	}))
 
 	// API routes
