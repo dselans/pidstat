@@ -1,4 +1,4 @@
-# go-pidstat
+# pidstat
 This is *my* re-imagination of what a modern `pidstat` would look like.
 
 At its core, it will graph CPU and memory usage over time and display it via the
@@ -7,7 +7,7 @@ built-in web server.
 ## Install
 If you have Go:
 ```
-$ go get github.com/dselans/go-pidstat
+$ go get github.com/dselans/pidstat
 $ pidstat help 
 ```
 

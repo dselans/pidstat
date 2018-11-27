@@ -10,7 +10,7 @@ import (
 	"github.com/shirou/gopsutil/process"
 	"go.uber.org/zap"
 
-	"github.com/dselans/go-pidstat/util"
+	"github.com/dselans/pidstat/util"
 )
 
 const (

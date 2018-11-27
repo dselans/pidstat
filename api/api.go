@@ -9,8 +9,8 @@ import (
 	renderPkg "github.com/unrolled/render"
 	"go.uber.org/zap"
 
-	"github.com/dselans/go-pidstat/deps"
-	"github.com/dselans/go-pidstat/util"
+	"github.com/dselans/pidstat/deps"
+	"github.com/dselans/pidstat/util"
 )
 
 var (

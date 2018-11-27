@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-chi/chi"
 
-	"github.com/dselans/go-pidstat/stat"
+	"github.com/dselans/pidstat/stat"
 )
 
 // Get all running (and watched) processes

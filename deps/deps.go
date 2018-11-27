@@ -5,7 +5,7 @@ import (
 
 	"github.com/gobuffalo/packr/v2"
 
-	"github.com/dselans/go-pidstat/stat"
+	"github.com/dselans/pidstat/stat"
 )
 
 type Dependencies struct {
