@@ -27,6 +27,7 @@ test/cover: ## Run all tests + open coverage report for all packages
 
 installtools: ## Install helper tools (req for build and clean targets)
 	go get -u github.com/gobuffalo/packr/v2/packr2
+	go get -u github.com/swaggo/swag
 
 build: clean build/linux build/darwin ## Build for linux and darwin (save to OUTPUT_DIR/BIN)
 
@@ -46,6 +47,9 @@ clean/linux: clean/packr2 ## Remove linux build artifacts
 
 clean/packr2: ## Remove packr2 generated bits
 	packr2 clean
+
+docs: ## Generate documentation (make sure you've ran `make installtools`)
+	swag init
 
 help: ## Display this help message
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_\/-]+:.*?## / {printf "\033[34m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | \

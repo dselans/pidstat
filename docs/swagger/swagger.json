@@ -1,0 +1,303 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "An API for fetching (and storing) PID metrics for generating pretty graphs",
+        "title": "pidstat",
+        "contact": {
+            "url": "https://github.com/dselans/pidstat"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "http://opensource.org/licenses/MIT"
+        },
+        "version": "1.0"
+    },
+    "paths": {
+        "/api/process": {
+            "get": {
+                "description": "Get a list of all running processes; details include PID, name and cmd line args",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pid"
+                ],
+                "summary": "Get all running processes",
+                "responses": {
+                    "200": {
+                        "description": "Contains zero or more process entries",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/stat.ProcInfo"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected server error",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.StatusResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/process/{pid}": {
+            "get": {
+                "description": "Get metrics for a watched process by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pid"
+                ],
+                "summary": "Get metrics for a watched process",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Process ID (int)",
+                        "name": "pid",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Process metrics",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/stat.ProcInfo"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid PID (not int?)",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.StatusResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "PID is not being watched",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.StatusResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected server error",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.StatusResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Start process watch for a specific PID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pid"
+                ],
+                "summary": "Start process watch",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Process ID (int)",
+                        "name": "pid",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Watch has been started for pid",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.StatusResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid PID (not int?)",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.StatusResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "PID is already being watched",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.StatusResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected server error",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.StatusResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Stop process watch for a specific PID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pid"
+                ],
+                "summary": "Stop process watch",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Process ID (int)",
+                        "name": "pid",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Watch has been stopped for pid",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.StatusResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid PID (not int?)",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.StatusResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "PID is not being watched",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.StatusResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected server error",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.StatusResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/version": {
+            "get": {
+                "description": "Another simple handler, similar to '/' - if this does not work, something is broken",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "basic"
+                ],
+                "summary": "Returns the current version of pidstat (api)",
+                "responses": {
+                    "200": {
+                        "description": "Returns the build version. Super simple endpoint -- if this doesn't work, something is busted",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.VersionResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/docs/index.html": {
+            "get": {
+                "description": "This endpoint serves the API spec via Swagger-UI (using github.com/swaggo/swag)",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "basic"
+                ],
+                "summary": "View API docs via Swagger-UI",
+                "responses": {
+                    "200": {
+                        "description": "Swagger-UI",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "api.StatusResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.VersionResponse": {
+            "type": "object",
+            "properties": {
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "stat.ProcInfo": {
+            "type": "object",
+            "properties": {
+                "cmd_line": {
+                    "type": "string"
+                },
+                "metrics": {
+                    "description": "Available only in Proc.Metrics",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/stat.ProcInfoMetrics"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "pid": {
+                    "description": "Available in both Stat.processList AND Proc.Metrics",
+                    "type": "integer"
+                }
+            }
+        },
+        "stat.ProcInfoMetrics": {
+            "type": "object",
+            "properties": {
+                "cpu": {
+                    "type": "number"
+                },
+                "rss": {
+                    "type": "integer"
+                },
+                "swap": {
+                    "type": "integer"
+                },
+                "threads": {
+                    "type": "integer"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "vms": {
+                    "type": "integer"
+                }
+            }
+        }
+    }
+}

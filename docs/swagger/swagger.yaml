@@ -1,0 +1,208 @@
+definitions:
+  api.StatusResponse:
+    properties:
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  api.VersionResponse:
+    properties:
+      version:
+        type: string
+    type: object
+  stat.ProcInfo:
+    properties:
+      cmd_line:
+        type: string
+      metrics:
+        description: Available only in Proc.Metrics
+        items:
+          $ref: '#/definitions/stat.ProcInfoMetrics'
+        type: array
+      name:
+        type: string
+      pid:
+        description: Available in both Stat.processList AND Proc.Metrics
+        type: integer
+    type: object
+  stat.ProcInfoMetrics:
+    properties:
+      cpu:
+        type: number
+      rss:
+        type: integer
+      swap:
+        type: integer
+      threads:
+        type: integer
+      timestamp:
+        type: string
+      vms:
+        type: integer
+    type: object
+info:
+  contact:
+    url: https://github.com/dselans/pidstat
+  description: An API for fetching (and storing) PID metrics for generating pretty
+    graphs
+  license:
+    name: MIT
+    url: http://opensource.org/licenses/MIT
+  title: pidstat
+  version: "1.0"
+paths:
+  /api/process:
+    get:
+      description: Get a list of all running processes; details include PID, name
+        and cmd line args
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Contains zero or more process entries
+          schema:
+            items:
+              $ref: '#/definitions/stat.ProcInfo'
+            type: array
+        "500":
+          description: Unexpected server error
+          schema:
+            $ref: '#/definitions/api.StatusResponse'
+            type: object
+      summary: Get all running processes
+      tags:
+      - pid
+  /api/process/{pid}:
+    delete:
+      description: Stop process watch for a specific PID
+      parameters:
+      - description: Process ID (int)
+        in: path
+        name: pid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Watch has been stopped for pid
+          schema:
+            $ref: '#/definitions/api.StatusResponse'
+            type: object
+        "400":
+          description: Invalid PID (not int?)
+          schema:
+            $ref: '#/definitions/api.StatusResponse'
+            type: object
+        "404":
+          description: PID is not being watched
+          schema:
+            $ref: '#/definitions/api.StatusResponse'
+            type: object
+        "500":
+          description: Unexpected server error
+          schema:
+            $ref: '#/definitions/api.StatusResponse'
+            type: object
+      summary: Stop process watch
+      tags:
+      - pid
+    get:
+      description: Get metrics for a watched process by ID
+      parameters:
+      - description: Process ID (int)
+        in: path
+        name: pid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Process metrics
+          schema:
+            $ref: '#/definitions/stat.ProcInfo'
+            type: object
+        "400":
+          description: Invalid PID (not int?)
+          schema:
+            $ref: '#/definitions/api.StatusResponse'
+            type: object
+        "404":
+          description: PID is not being watched
+          schema:
+            $ref: '#/definitions/api.StatusResponse'
+            type: object
+        "500":
+          description: Unexpected server error
+          schema:
+            $ref: '#/definitions/api.StatusResponse'
+            type: object
+      summary: Get metrics for a watched process
+      tags:
+      - pid
+    post:
+      description: Start process watch for a specific PID
+      parameters:
+      - description: Process ID (int)
+        in: path
+        name: pid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Watch has been started for pid
+          schema:
+            $ref: '#/definitions/api.StatusResponse'
+            type: object
+        "400":
+          description: Invalid PID (not int?)
+          schema:
+            $ref: '#/definitions/api.StatusResponse'
+            type: object
+        "409":
+          description: PID is already being watched
+          schema:
+            $ref: '#/definitions/api.StatusResponse'
+            type: object
+        "500":
+          description: Unexpected server error
+          schema:
+            $ref: '#/definitions/api.StatusResponse'
+            type: object
+      summary: Start process watch
+      tags:
+      - pid
+  /api/version:
+    get:
+      description: Another simple handler, similar to '/' - if this does not work,
+        something is broken
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Returns the build version. Super simple endpoint -- if this
+            doesn't work, something is busted
+          schema:
+            $ref: '#/definitions/api.VersionResponse'
+            type: object
+      summary: Returns the current version of pidstat (api)
+      tags:
+      - basic
+  /docs/index.html:
+    get:
+      description: This endpoint serves the API spec via Swagger-UI (using github.com/swaggo/swag)
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: Swagger-UI
+          schema:
+            type: string
+      summary: View API docs via Swagger-UI
+      tags:
+      - basic
+swagger: "2.0"

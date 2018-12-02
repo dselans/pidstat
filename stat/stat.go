@@ -65,7 +65,7 @@ type ProcInfo struct {
 	CmdLine string `json:"cmd_line"`
 
 	// Available only in Proc.Metrics
-	Metrics     []ProcInfoMetrics `json:"metrics,omitempty"`
+	Metrics     []ProcInfoMetrics `json:"metrics"`
 	MetricsLock *sync.Mutex       `json:"-"`
 }
 

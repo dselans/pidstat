@@ -6,10 +6,12 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/swaggo/http-swagger"
 	renderPkg "github.com/unrolled/render"
 	"go.uber.org/zap"
 
 	"github.com/dselans/pidstat/deps"
+	_ "github.com/dselans/pidstat/docs"
 	"github.com/dselans/pidstat/util"
 )
 
@@ -54,6 +56,8 @@ func (a *API) Run() error {
 	r.Get("/*", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.FileServer(a.dependencies.PackrBox).ServeHTTP(w, r)
 	}))
+
+	r.Get("/docs/*", httpSwagger.WrapHandler)
 
 	// API routes
 	r.Route("/api", func(r chi.Router) {

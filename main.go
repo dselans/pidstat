@@ -1,3 +1,11 @@
+// @title pidstat
+// @version 1.0
+// @description An API for fetching (and storing) PID metrics for generating pretty graphs
+//
+// @contact.url https://github.com/dselans/pidstat
+//
+// @license.name MIT
+// @license.url http://opensource.org/licenses/MIT
 package main
 
 import (
