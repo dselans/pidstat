@@ -48,6 +48,12 @@ This project uses:
 * For UI: [vuejs](https://github.com/vuejs)
     * My usual go to: [w3schools](https://www.w3schools.com/)
 
+## Personal Notes
+* Should we vendor dependencies?
+    * Looks like go modules, by default, do not utilize vendoring. Feels weird.
+    * [Vendoring doc](https://github.com/golang/go/wiki/Modules#how-do-i-use-vendoring-with-modules-is-vendoring-going-away)
+    * _A: Won't vendor until/unless it becomes a hassle._
+
 ## Contribute
 See something dumb? Let's fix it - open a PR and let's discuss it! I am usually
 pretty quick with PR's but if you're not seeing any traction, message '' on
