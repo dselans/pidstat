@@ -50,7 +50,7 @@ This project uses:
 
 ## Personal Notes
 * Should we vendor dependencies?
-    * Looks like go modules, by default, do not utilize vendoring. Feels weird.
+    * Looks like go modules do not utilize vendoring (by default). Feels weird.
     * [Vendoring doc](https://github.com/golang/go/wiki/Modules#how-do-i-use-vendoring-with-modules-is-vendoring-going-away)
     * _A: Won't vendor until/unless it becomes a hassle._
 
