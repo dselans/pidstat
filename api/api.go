@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/cors"
 	"github.com/swaggo/http-swagger"
 	renderPkg "github.com/unrolled/render"
 	"go.uber.org/zap"
@@ -49,8 +50,15 @@ func New(listenAddress, version string, d *deps.Dependencies) (*API, error) {
 func (a *API) Run() error {
 	r := chi.NewRouter()
 
-	// Don't need a whole lot
+	// Output apache-style access logs
 	r.Use(middleware.Logger)
+
+	// CORS
+	corsMW := cors.New(cors.Options{
+		AllowedOrigins: []string{"*"},
+	})
+
+	r.Use(corsMW.Handler)
 
 	// Serve static files
 	r.Get("/*", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

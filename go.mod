@@ -2,6 +2,7 @@ module github.com/dselans/pidstat
 
 require (
 	github.com/go-chi/chi v3.3.3+incompatible
+	github.com/go-chi/cors v1.0.0 // indirect
 	github.com/go-openapi/jsonreference v0.17.2 // indirect
 	github.com/go-openapi/spec v0.17.2 // indirect
 	github.com/gobuffalo/packr/v2 v2.0.0-rc.8
