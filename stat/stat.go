@@ -169,9 +169,9 @@ func (s *Stat) GetProcesses() ([]ProcInfo, error) {
 	s.watchedLock.Lock()
 	defer s.watchedLock.Unlock()
 
-	for _, v := range processList {
+	for i, v := range processList {
 		if _, ok := s.watched[v.PID]; ok {
-			v.Watched = true
+			processList[i].Watched = true
 		}
 	}
 
@@ -230,7 +230,13 @@ func (s *Stat) StartWatchProcess(pid int32) error {
 		return fmt.Errorf("unable to fetch initial status for pid '%v': %v", pid, err)
 	}
 
+	// Set watched state (non-critical, display purposes)
+	procInfo.Watched = true
+
 	looper := director.NewImmediateTimedLooper(director.FOREVER, StatInterval, nil)
+
+	// Update watched map
+	s.watchedLock.Lock()
 
 	s.watched[pid] = &Proc{
 		ProcInfo: procInfo,
@@ -239,6 +245,8 @@ func (s *Stat) StartWatchProcess(pid int32) error {
 	}
 
 	watchedProc := s.watched[pid]
+
+	s.watchedLock.Unlock()
 
 	// Gather watched in a goroutine
 	go func(watchedProc *Proc) {
