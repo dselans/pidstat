@@ -56,6 +56,7 @@ func (a *API) Run() error {
 	// CORS
 	corsMW := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 	})
 
 	r.Use(corsMW.Handler)
