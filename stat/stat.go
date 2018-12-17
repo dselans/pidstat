@@ -63,6 +63,7 @@ type ProcInfo struct {
 	PID     int32  `json:"pid"`
 	Name    string `json:"name"`
 	CmdLine string `json:"cmd_line"`
+	Watched bool   `json:"watched"`
 
 	// Available only in Proc.Metrics
 	Metrics     []ProcInfoMetrics `json:"metrics"`
@@ -163,6 +164,16 @@ func (s *Stat) GetProcesses() ([]ProcInfo, error) {
 	copy(processList, s.processList)
 
 	s.processListLock.Unlock()
+
+	// Now update our processlist copy to contain watched status
+	s.watchedLock.Lock()
+	defer s.watchedLock.Unlock()
+
+	for _, v := range processList {
+		if _, ok := s.watched[v.PID]; ok {
+			v.Watched = true
+		}
+	}
 
 	return processList, nil
 }
