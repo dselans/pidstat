@@ -25,6 +25,8 @@ definitions:
       pid:
         description: Available in both Stat.processList AND Proc.Metrics
         type: integer
+      watched:
+        type: boolean
     type: object
   stat.ProcInfoMetrics:
     properties:
@@ -116,6 +118,10 @@ paths:
         name: pid
         required: true
         type: string
+      - description: Fetch metrics at offset
+        in: query
+        name: offset
+        type: integer
       produces:
       - application/json
       responses:

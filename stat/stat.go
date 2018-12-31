@@ -21,13 +21,14 @@ const (
 var (
 	NotWatchedErr     = errors.New("pid is not actively watched")
 	AlreadyWatchedErr = errors.New("pid is already being watched")
+	InvalidOffsetErr  = errors.New("invalid offset")
 
 	sugar *zap.SugaredLogger
 )
 
 type Statter interface {
 	GetProcesses() ([]ProcInfo, error)
-	GetStatsForPID(pid int32) (ProcInfo, error)
+	GetStatsForPID(pid int32, offset int) (ProcInfo, error)
 	StartWatchProcess(pid int32) error
 	StopWatchProcess(pid int32) error
 }
@@ -357,7 +358,7 @@ func (s *Stat) StopWatchProcess(pid int32) error {
 }
 
 // Get statistics for a specific pid
-func (s *Stat) GetStatsForPID(pid int32) (ProcInfo, error) {
+func (s *Stat) GetStatsForPID(pid int32, offset int) (ProcInfo, error) {
 	if !s.isWatched(pid) {
 		return ProcInfo{}, NotWatchedErr
 	}
@@ -375,8 +376,12 @@ func (s *Stat) GetStatsForPID(pid int32) (ProcInfo, error) {
 	proc.ProcInfo.MetricsLock.Lock()
 	defer proc.ProcInfo.MetricsLock.Unlock()
 
-	metrics := make([]ProcInfoMetrics, len(proc.ProcInfo.Metrics))
-	copy(metrics, proc.ProcInfo.Metrics)
+	if len(proc.ProcInfo.Metrics) < offset {
+		return ProcInfo{}, InvalidOffsetErr
+	}
+
+	metrics := make([]ProcInfoMetrics, 0)
+	metrics = append(metrics, proc.ProcInfo.Metrics[offset:]...)
 
 	procCopy := *proc
 	procCopy.ProcInfo.Metrics = metrics

@@ -60,6 +60,12 @@
                         "name": "pid",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Fetch metrics at offset",
+                        "name": "offset",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -273,6 +279,9 @@
                 "pid": {
                     "description": "Available in both Stat.processList AND Proc.Metrics",
                     "type": "integer"
+                },
+                "watched": {
+                    "type": "boolean"
                 }
             }
         },

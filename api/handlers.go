@@ -52,9 +52,11 @@ func (a *API) getProcesses(w http.ResponseWriter, r *http.Request) {
 // @Tags pid
 // @Produce json
 // @Param pid path string true "Process ID (int)"
+// @Param offset query int false "Fetch metrics at offset"
 // @Success 200 {object} stat.ProcInfo "Process metrics"
-// @Failure 400 {object} api.StatusResponse "Invalid PID (not int?)"
+// @Failure 400 {object} api.StatusResponse "Invalid PID (not int) or invalid offset (too high)"
 // @Failure 404 {object} api.StatusResponse "PID is not being watched"
+// @Failure 416 {object} api.StatusResponse "Invalid offset (too high)"
 // @Failure 500 {object} api.StatusResponse "Unexpected server error"
 // @Router /api/process/{pid} [get]
 func (a *API) getProcess(w http.ResponseWriter, r *http.Request) {
@@ -79,14 +81,37 @@ func (a *API) getProcess(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	procInfo, err := a.dependencies.Statter.GetStatsForPID(int32(processID))
+	// Get QP
+	offsetQueryParam := r.URL.Query().Get("offset")
+
+	var offset int
+
+	if offsetQueryParam != "" {
+		var err error
+
+		offset, err = strconv.Atoi(offsetQueryParam)
+		if err != nil {
+			render.JSON(w, http.StatusBadRequest, StatusResponse{
+				Status:  "error",
+				Message: "offset must be an integer",
+			})
+
+			return
+		}
+	}
+
+	procInfo, err := a.dependencies.Statter.GetStatsForPID(int32(processID), offset)
 	if err != nil {
 		statusCode := http.StatusInternalServerError
 		errorMessage := fmt.Sprintf("unable to fetch stats for processID '%v': %v", int32(processID), err)
 
-		if err == stat.NotWatchedErr {
+		switch err {
+		case stat.NotWatchedErr:
 			statusCode = http.StatusNotFound
 			errorMessage = fmt.Sprintf("processID '%v' is not being watched", int32(processID))
+		case stat.InvalidOffsetErr:
+			statusCode = http.StatusRequestedRangeNotSatisfiable
+			errorMessage = fmt.Sprintf("provided offset is invalid")
 		}
 
 		render.JSON(w, statusCode, StatusResponse{
