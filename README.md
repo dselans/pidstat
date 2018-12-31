@@ -1,8 +1,8 @@
 # pidstat
 This is *my* re-imagination of what a modern `pidstat` would look like.
 
-At its core, it will graph CPU and memory usage over time and display it via the
-built-in web server.
+At its core, it will graph CPU and memory usage for selected PIDs over time and display it via the
+built-in web UI.
 
 ## Install
 If you have Go:
@@ -45,16 +45,23 @@ This project uses:
     * My usual go to: [alecthomas/kingpin](https://github.com/alecthomas/kingpin)
 * For vendoring: [vgo](https://github.com/golang/go/wiki/vgo)
     * My usual go to: [kardianos/govendor](https://github.com/kardianos/govendor)
-* For UI: [vuejs](https://github.com/vuejs)
-    * My usual go to: [w3schools](https://www.w3schools.com/)
+* For docs: [swaggo/swag](https://github.com/swaggo/swag)
+    * Comment based swagger API doc generation + built-in view == :heart:
+* For frontend: [vuejs](https://github.com/vuejs)
+    * For charts: [chartjs](https://github.com/chartjs/Chart.js)
+    * For layout: [bootswatch](https://bootswatch.com/sandstone/)
+
 
 ## Personal Notes
 * Should we vendor dependencies?
     * Looks like go modules do not utilize vendoring (by default). Feels weird.
     * [Vendoring doc](https://github.com/golang/go/wiki/Modules#how-do-i-use-vendoring-with-modules-is-vendoring-going-away)
     * _A: Won't vendor until/unless it becomes a hassle._
+* What does the release process look like?
+   * A release consists of building `pidstat-ui` and injecting the artifact into the `pidstat` build process
+   * No need to automate this yet
 
 ## Contribute
 See something dumb? Let's fix it - open a PR and let's discuss it! I am usually
-pretty quick with PR's but if you're not seeing any traction, message '' on
+pretty quick with PR's but if you're not seeing any traction, message `dselans` on
 [Gopher Slack](https://invite.slack.golangbridge.org/).
